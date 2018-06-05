@@ -19,7 +19,8 @@ SOFTWARE_REAL_PATH = sys._MEIPASS if getattr(sys, 'frozen', False) else SOFTWARE
 CONFIG_FILE = os.path.join(SOFTWARE_PATH, r'appupdate.ini')
 CONFIG_FILE_CONTENT_DEFAULT =\
 r'''[outfile]
-path = update.img
+path = .
+name = update.img
 
 '''
 
@@ -50,26 +51,26 @@ sync
 reboot
 '''
 
-class ConfigClass():
-    """merge config"""
-    def __init__(self):
-        if not os.path.isfile(CONFIG_FILE):
-            print('config file not found, create new.')
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as new_file:
-                new_file.write(CONFIG_FILE_CONTENT_DEFAULT)
-        self.config = configparser.ConfigParser()
-        self.config.read(CONFIG_FILE, encoding='utf-8-sig')
+# class ConfigClass():
+#     """merge config"""
+#     def __init__(self):
+#         if not os.path.isfile(CONFIG_FILE):
+#             print('config file not found, create new.')
+#             with open(CONFIG_FILE, 'w', encoding='utf-8') as new_file:
+#                 new_file.write(CONFIG_FILE_CONTENT_DEFAULT)
+#         self.config = configparser.ConfigParser()
+#         self.config.read(CONFIG_FILE, encoding='utf-8-sig')
 
-    def chk_config(self):
-        """chk config"""
-        if not self.outfile_cfg().get('path'):
-            raise Exception('out file invalid, merge abort.')
+#     def chk_config(self):
+#         """chk config"""
+#         if not self.outfile_cfg().get('path'):
+#             raise Exception('out file invalid, merge abort.')
 
-    def outfile_cfg(self):
-        """outfile_cfg"""
-        return self.config['outfile']
+#     def outfile_cfg(self):
+#         """outfile_cfg"""
+#         return self.config['outfile']
 
-CONFIG = ConfigClass()
+# CONFIG = ConfigClass()
 
 
 def create_img(outpath):
@@ -122,27 +123,39 @@ def del_outfile(outpath):
         traceback.print_exc()
         print('outfile del failed.')
 
+
+def useage():
+    """useage"""
+    print('SP6AppUpdateCreator [-o outputpath] [-n outputname] workpath')
+
+
 if __name__ == '__main__':
+    out_file_path = SOFTWARE_PATH
+    out_file_name = 'update.img'
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "o:n:")
+    if not args:
+        useage()
+        raise Exception('ERROR: 请将需要打包的文件夹拖到本软件上进行打包')
+    WORKING_PATH = args[0]
+    for op, value in opts:
+        if op == '-o':
+            out_file_path = os.path.abspath(value)
+        if op == '-n':
+            out_file_name = value
     try:
-        CONFIG.chk_config()
-        opts, args = getopt.getopt(sys.argv[1:], "o:")
-        if not args:
-            raise Exception('ERROR: 请将需要打包的文件夹拖到本软件上进行打包')
-        WORKING_PATH = args[0]
-        out_file_path = os.path.join(WORKING_PATH, '..', CONFIG.outfile_cfg().get('path'))
-        for op, value in opts:
-            if op == '-o':
-                out_file_path = os.path.join(value)
+        # CONFIG.chk_config()
         if not os.path.isdir(WORKING_PATH):
             raise Exception('ERROR: working path{path} invalid.'.format(path=WORKING_PATH))
+        if not os.path.isdir(out_file_path):
+            os.makedirs(out_file_path)
 
         tm_start = time.time()
         print('SP6 App Update Creator {ver}({date}).Designed by Kay.'.format(ver=VERSION, date=DATE))
         print('WORKING_PATH:', WORKING_PATH)
-        print('CONFIG_FILE:', CONFIG_FILE)
-        print('out file:', out_file_path)
+        # print('CONFIG_FILE:', CONFIG_FILE)
+        print('out file path:', out_file_path)
 
-        if create_img(out_file_path) == 0:
+        if create_img(os.path.join(out_file_path, out_file_name)) == 0:
             print('success')
         else:
             raise Exception('!!FAILED!!')
@@ -151,7 +164,7 @@ if __name__ == '__main__':
     except Exception:
         traceback.print_exc()
         os.system('color 47')
-        del_outfile(out_file_path)
+        del_outfile(os.path.join(out_file_path, out_file_name))
         time.sleep(3)
         os.system('color 07')
         sys.exit(1)
