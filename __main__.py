@@ -9,8 +9,8 @@ import traceback
 import time
 import hashcalc
 
-VERSION = 'V0.1'
-DATE = '20180601'
+VERSION = 'V0.2'
+DATE = '20180611'
 
 TEMP_PATH = os.path.join(os.environ["TMP"], str(time.time()).split('.')[0])
 WORKING_PATH = None
@@ -83,24 +83,26 @@ def create_img(outpath):
         if os.path.isfile(md5_file_path):
             os.remove(md5_file_path)
 
-        dos2unix_path = os.path.join(SOFTWARE_REAL_PATH, r'mkcramfs\dos2unix.exe')
+        # dos2unix_path = os.path.join(SOFTWARE_REAL_PATH, r'mkcramfs\dos2unix.exe')
 
         # write script
         files = ['%s'%x for x in os.listdir(WORKING_PATH) if os.path.isfile(os.path.join(WORKING_PATH, x))]
         sh_content = UPDATE_SCRIPT_FORMAT%(' '.join(files))
-        with open(sh_file_path, 'w') as sh_file:
+        with open(sh_file_path, 'w', newline='\n') as sh_file:
             sh_file.write(sh_content)
-        os.system(dos2unix_path + ' "' + sh_file_path + '"')
+        # cmd = '{exe} "{sh}"'.format(exe=dos2unix_path, sh=sh_file_path)
+        # os.system(cmd)
+        # print('cmd:', cmd)
 
         # calc md5
         md5_content = hashcalc.md5sum(WORKING_PATH)
-        with open(md5_file_path, 'w') as md5_file:
+        with open(md5_file_path, 'w', newline='\n') as md5_file:
             md5_file.write(md5_content)
-        os.system(dos2unix_path + ' "' + md5_file_path + '"')
+        # os.system('{exe} "{sh}"'.format(exe=dos2unix_path, sh=md5_file_path))
 
         # mk cramfs
         mkcramfs_path = os.path.join(SOFTWARE_REAL_PATH, r'mkcramfs\mkcramfs.exe')
-        cmd = mkcramfs_path + ' "' + WORKING_PATH + '" "' + outpath + '"'
+        cmd = '{exe} "{dir}" "{img}"'.format(exe=mkcramfs_path, dir=WORKING_PATH, img=outpath)
         print('cmd:', cmd)
         if os.system(cmd) != 0:
             raise Exception('mkcramfs error, merge abort.')
@@ -111,7 +113,7 @@ def create_img(outpath):
     finally:
         # del sh
         if os.path.isfile(sh_file_path):os.remove(sh_file_path)
-        # if os.path.isfile(md5_file_path):os.remove(md5_file_path)
+        if os.path.isfile(md5_file_path):os.remove(md5_file_path)
 
 
 def del_outfile(outpath):
@@ -130,19 +132,19 @@ def useage():
 
 
 if __name__ == '__main__':
-    out_file_path = SOFTWARE_PATH
-    out_file_name = 'update.img'
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "o:n:")
-    if not args:
-        useage()
-        raise Exception('ERROR: 请将需要打包的文件夹拖到本软件上进行打包')
-    WORKING_PATH = args[0]
-    for op, value in opts:
-        if op == '-o':
-            out_file_path = os.path.abspath(value)
-        if op == '-n':
-            out_file_name = value
     try:
+        out_file_path = SOFTWARE_PATH
+        out_file_name = 'update.img'
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "o:n:")
+        if not args:
+            useage()
+            raise Exception('ERROR: 请将需要打包的文件夹拖到本软件上进行打包')
+        WORKING_PATH = os.path.abspath(args[0])
+        for op, value in opts:
+            if op == '-o':
+                out_file_path = os.path.abspath(value)
+            if op == '-n':
+                out_file_name = value
         # CONFIG.chk_config()
         if not os.path.isdir(WORKING_PATH):
             raise Exception('ERROR: working path{path} invalid.'.format(path=WORKING_PATH))
