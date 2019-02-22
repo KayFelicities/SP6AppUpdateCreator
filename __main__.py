@@ -32,12 +32,14 @@ killall -9 sxConsole
 killall -9 sxShell
 killall -9 sp6
 killall -9 sxChan
+killall -9 sxGate
 killall -9 mosquitto
 
 array_file="%s"
 load_path="/media/app/bin"
+update_path=$(cd `dirname $0`; pwd)
 for name in ${array_file};do
- cp /mnt/update/${name} ${load_path}
+ cp ${update_path}/${name} ${load_path}
  chmod +x ${load_path}/${name}
  echo ${load_path}/${name}
 done
