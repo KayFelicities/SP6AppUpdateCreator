@@ -9,8 +9,8 @@ import traceback
 import time
 import hashcalc
 
-VERSION = 'V0.2'
-DATE = '20180611'
+VERSION = 'V0.3'
+DATE = '20190221'
 
 TEMP_PATH = os.path.join(os.environ["TMP"], str(time.time()).split('.')[0])
 WORKING_PATH = None
